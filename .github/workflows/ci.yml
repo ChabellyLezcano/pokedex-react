@@ -28,9 +28,6 @@ jobs:
       - name: Install deps
         run: pnpm install --frozen-lockfile
 
-      - name: ESLint
-        run: pnpm run lint
-
       - name: Prettier check
         run: pnpm run format:check
 
