@@ -1,56 +1,54 @@
+// src/pages/PokemonDetailPage.tsx
 import { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getPokemonDetail } from "../api/pokeApi";
 
-// desde tu barrel de types
 import {
+  getTypeColors,
+  type PokemonType,
   type PokemonDetail,
   type PokemonStat,
   type PokemonTypeSlot,
   type PokemonAbilitySlot
-} from "../types/pokeApiTypes";
-
-import { getTypeColors, type PokemonType } from "../types/index";
+} from "../types";
 
 export default function PokemonDetailPage() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const [p, setP] = useState<PokemonDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!id) return;
+
     void (async () => {
       setLoading(true);
-      const data = await getPokemonDetail(id!);
+      const data = await getPokemonDetail(id);
       setP(data);
       setLoading(false);
     })();
   }, [id]);
 
-  // Total energy (0..1)
   const energy = useMemo(() => {
-    const stats = p?.stats ?? [];
-    const sum = stats.reduce((acc: number, s: PokemonStat) => acc + s.base_stat, 0);
+    const stats: PokemonStat[] = p?.stats ?? [];
+    const sum = stats.reduce((acc, s) => acc + s.base_stat, 0);
     return Math.min(1, sum / 600);
   }, [p]);
 
-  // Primary type (literal union)
   const primaryType: PokemonType = p?.types?.[0]?.type?.name ?? "normal";
-
-  // Aura colors from typed helper
   const auraColors = getTypeColors(primaryType);
 
   const auraVarsStyle: React.CSSProperties & Record<"--c1" | "--c2" | "--c3", string> = {
     "--c1": auraColors.c1,
     "--c2": auraColors.c2,
-    "--c3": auraColors.c1 // derivado
+    "--c3": auraColors.c1
   };
 
   function statToHue(value: number) {
     const pct = Math.min(1, value / 255);
-    return pct * 120;
+    return pct * 120; // red -> green
   }
 
-  function statBarStyle(value: number) {
+  function statBarStyle(value: number): React.CSSProperties {
     const pct = Math.min(100, (value / 255) * 100);
     const hue = statToHue(value);
     const color = `hsl(${hue} 90% 55%)`;
@@ -59,7 +57,7 @@ export default function PokemonDetailPage() {
       width: `${pct}%`,
       background: color,
       boxShadow: `0 0 18px ${color}66`
-    } as React.CSSProperties;
+    };
   }
 
   const aura = useMemo(() => {
@@ -86,9 +84,7 @@ export default function PokemonDetailPage() {
   }
 
   const image =
-    p.sprites?.other?.["official-artwork"]?.front_default ||
-    p.sprites?.front_default ||
-    "";
+    p.sprites.other?.["official-artwork"]?.front_default ?? p.sprites.front_default ?? "";
 
   return (
     <section className="grid gap-4">
@@ -96,7 +92,6 @@ export default function PokemonDetailPage() {
         ← Back
       </Link>
 
-      {/* HERO */}
       <div className="glass overflow-hidden">
         <div className="relative p-4 sm:p-6">
           <div className="flex items-center justify-between">
@@ -104,16 +99,12 @@ export default function PokemonDetailPage() {
             <span className="pill text-sm">#{p.id}</span>
           </div>
 
-          {/* IMAGE + AURA */}
+          {/* IMAGE + AURA (overflow visible) */}
           <div
-            className="
-    relative mt-3 mb-4 grid place-items-center isolate
-    overflow-visible
-    min-h-82 sm:mism:min-h-100
-  "
+            className="relative mt-3 mb-4 grid place-items-center isolate"
             style={auraVarsStyle}
           >
-            <div className="absolute inset-0 grid place-items-center pointer-events-none z-0">
+            <div className="absolute inset-0 grid place-items-center pointer-events-none">
               <div
                 className="aura-rays w-72 h-72 sm:w-80 sm:h-80 rounded-full blur-xl"
                 style={{
@@ -154,11 +145,10 @@ export default function PokemonDetailPage() {
             <img
               src={image}
               alt={p.name}
-              className="relative z-10 w-full h-56 sm:h-64 object-contain drop-shadow-2xl animate-floaty"
+              className="relative w-full h-56 sm:h-64 object-contain drop-shadow-2xl animate-floaty"
             />
           </div>
 
-          {/* Types */}
           <div className="flex gap-2 flex-wrap">
             {p.types.map((t: PokemonTypeSlot) => (
               <span key={t.type.name} className="pill capitalize">
@@ -169,7 +159,6 @@ export default function PokemonDetailPage() {
         </div>
       </div>
 
-      {/* STATS */}
       <div className="glass p-4 sm:p-6 grid gap-3">
         <div className="flex items-center justify-between">
           <h2 className="font-bold text-lg">Stats</h2>
@@ -195,7 +184,6 @@ export default function PokemonDetailPage() {
         </div>
       </div>
 
-      {/* ABILITIES */}
       <div className="glass p-4 sm:p-6">
         <h2 className="font-bold text-lg mb-2">Abilities</h2>
         <div className="flex gap-2 flex-wrap">
@@ -207,7 +195,6 @@ export default function PokemonDetailPage() {
         </div>
       </div>
 
-      {/* Aura CSS */}
       <style>{`
         @keyframes auraSpin { to { transform: rotate(360deg); } }
 
@@ -242,8 +229,6 @@ export default function PokemonDetailPage() {
             );
           animation: auraSpin linear infinite;
           mix-blend-mode: screen;
-
-          /* máscara para evitar manchas laterales */
           -webkit-mask-image: radial-gradient(circle, black 0%, black 55%, transparent 75%);
           mask-image: radial-gradient(circle, black 0%, black 55%, transparent 75%);
         }
@@ -269,8 +254,6 @@ export default function PokemonDetailPage() {
           filter: blur(28px);
           animation: auraWaves ease-out infinite;
           mix-blend-mode: screen;
-
-          /* máscara para difuminar bordes */
           -webkit-mask-image: radial-gradient(circle, black 0%, black 60%, transparent 82%);
           mask-image: radial-gradient(circle, black 0%, black 60%, transparent 82%);
         }
@@ -284,8 +267,6 @@ export default function PokemonDetailPage() {
             );
           animation: auraFlicker ease-in-out infinite;
           mix-blend-mode: screen;
-
-          /* evita “burbujas” laterales */
           -webkit-mask-image: radial-gradient(circle, black 0%, black 60%, transparent 80%);
           mask-image: radial-gradient(circle, black 0%, black 60%, transparent 80%);
         }

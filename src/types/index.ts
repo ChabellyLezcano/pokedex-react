@@ -1,2 +1,2 @@
-export * from "./typeColors";
+// src/types/index.ts
 export * from "./pokeApiTypes";

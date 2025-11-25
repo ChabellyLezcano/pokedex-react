@@ -1,4 +1,5 @@
-import { TYPE_COLORS, TYPES, isLightType, type PokemonType } from "../types";
+import { TYPE_COLORS, type PokemonType } from "../types";
+import { isLightType, TYPES } from "../types/typeColors";
 
 type Props = {
   value: PokemonType | null;
